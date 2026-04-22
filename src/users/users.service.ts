@@ -319,7 +319,7 @@ export class UsersService {
     const summaryRaw = await this.usersRepository.manager
       .createQueryBuilder()
       .select(
-        `(SELECT COUNT(*) FROM events e WHERE e.organizerId = :userId)`,
+        `(SELECT COUNT(*) FROM events e WHERE e."organizerId" = :userId)`,
         'organizedEventsCount',
       )
       .addSelect(
