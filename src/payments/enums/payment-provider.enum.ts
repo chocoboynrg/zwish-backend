@@ -1,0 +1,8 @@
+export enum PaymentProvider {
+  STRIPE = 'STRIPE',
+  FLUTTERWAVE = 'FLUTTERWAVE',
+  MOBILE_MONEY = 'MOBILE_MONEY',
+  PAYDUNYA = 'PAYDUNYA',
+  FEDAPAY = 'FEDAPAY',
+  OTHER = 'OTHER',
+}

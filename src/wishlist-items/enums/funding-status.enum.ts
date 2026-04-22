@@ -1,0 +1,5 @@
+export enum FundingStatus {
+  NOT_FUNDED = 'NOT_FUNDED',
+  PARTIALLY_FUNDED = 'PARTIALLY_FUNDED',
+  FUNDED = 'FUNDED',
+}
