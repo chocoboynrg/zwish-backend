@@ -32,7 +32,7 @@ import { AuditModule } from '../audit/audit.module';
       {
         name: 'default',
         ttl: 60 * 1000,
-        limit: 20,
+        limit: 100, // ✅ 100 req/min pour les routes GET normales (notifications, dashboard, etc.)
         skipIf: () => process.env.NODE_ENV === 'test',
       },
     ]),

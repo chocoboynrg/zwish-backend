@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -31,6 +32,8 @@ export class NotificationsController {
     return buildSuccessResponse({ item }, 'Notification créée');
   }
 
+  // ✅ Limite généreuse : appelé à chaque navigation
+  @Throttle({ default: { limit: 200, ttl: 60 * 1000 } })
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async findMyNotifications(@CurrentUser() user: JwtUser) {
@@ -52,6 +55,8 @@ export class NotificationsController {
     );
   }
 
+  // ✅ Limite généreuse : appelé à chaque navigation
+  @Throttle({ default: { limit: 200, ttl: 60 * 1000 } })
   @UseGuards(JwtAuthGuard)
   @Get('me/unread-count')
   async countUnread(@CurrentUser() user: JwtUser) {
