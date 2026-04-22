@@ -17,7 +17,7 @@ import {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Throttle({ default: { limit: 3, ttl: 60 * 60 * 1000 } })
+  @Throttle({ default: { limit: 5, ttl: 60 * 60 * 1000 } })
   @Post('register')
   async register(@Body() body: RegisterDto) {
     const result = await this.authService.register(
@@ -37,7 +37,8 @@ export class AuthController {
     );
   }
 
-  @Throttle({ default: { limit: 5, ttl: 60 * 1000 } })
+  // 20 tentatives par minute — suffisant pour un usage normal, bloque le brute force
+  @Throttle({ default: { limit: 20, ttl: 60 * 1000 } })
   @Post('login')
   async login(@Body() body: LoginDto) {
     const result = await this.authService.login(body.email, body.password);
@@ -64,7 +65,7 @@ export class AuthController {
     );
   }
 
-  @Throttle({ default: { limit: 3, ttl: 60 * 60 * 1000 } })
+  @Throttle({ default: { limit: 5, ttl: 60 * 60 * 1000 } })
   @Post('resend-verification')
   async resendVerification(@Body() body: ResendVerificationDto) {
     const result = await this.authService.resendVerification(body.email);
