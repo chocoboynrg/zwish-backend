@@ -1,16 +1,17 @@
+// ⚠️ dotenv DOIT être chargé avant tout autre import NestJS
+// Node.js résout les imports dans l'ordre — ce fichier garantit
+// que process.env est peuplé avant que les décorateurs soient évalués
+import * as dotenv from 'dotenv';
+import { join } from 'path';
+dotenv.config({ path: join(process.cwd(), '.env') });
+
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ApiExceptionFilter } from './common/filters/api-exception.filter';
-import * as dotenv from 'dotenv';
-import { join } from 'path';
 import * as express from 'express';
-dotenv.config({ path: join(process.cwd(), '.env') });
 
 async function bootstrap() {
-  // 🔥 charge .env AVANT tout
-  dotenv.config();
-
   console.log('ENV CHECK =>', {
     cwd: process.cwd(),
     jwt: process.env.JWT_SECRET ? 'OK' : 'MISSING',
@@ -29,11 +30,6 @@ async function bootstrap() {
 
   app.enableCors({
     origin: true,
-    // origin: [
-    //   'http://localhost:4200',
-    //   'http://127.0.0.1:4200',
-    //   'http://localhost:50935',
-    // ],
     credentials: true,
   });
 
