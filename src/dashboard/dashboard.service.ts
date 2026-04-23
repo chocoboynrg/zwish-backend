@@ -470,7 +470,7 @@ export class DashboardService {
       })
       .groupBy('event.id')
       .addGroupBy('event.title')
-      .orderBy('totalAmount', 'DESC')
+      .orderBy('SUM(c.amount)', 'DESC')
       .limit(5)
       .getRawMany<{
         eventId: string;

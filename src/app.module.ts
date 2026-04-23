@@ -40,6 +40,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
       database: process.env.DB_NAME || 'wishlist_db',
       autoLoadEntities: true,
       synchronize: true,
+      logging: true,
     }),
     UsersModule,
     EventsModule,

@@ -279,14 +279,13 @@ export class UsersService {
   }
 
   async getAdminUserById(id: number) {
-    const user = await this.usersRepository.findOne({
-      where: { id },
-    });
+    const user = await this.usersRepository.findOne({ where: { id } });
 
     if (!user) {
       throw new NotFoundException('Utilisateur introuvable');
     }
 
+    // Ces requêtes utilisent les relations TypeORM — OK
     const organizedEvents = await this.eventsRepository
       .createQueryBuilder('event')
       .leftJoin('event.organizer', 'organizer')
@@ -316,31 +315,28 @@ export class UsersService {
       take: 10,
     });
 
-    const summaryRaw = await this.usersRepository.manager
-      .createQueryBuilder()
-      .select(
-        `(SELECT COUNT(*) FROM events e WHERE e."organizerId" = :userId)`,
-        'organizedEventsCount',
-      )
-      .addSelect(
-        `(SELECT COUNT(*) FROM contributions c WHERE c.contributor_user_id = :userId)`,
-        'contributionsCount',
-      )
-      .addSelect(
-        `(SELECT COUNT(*) FROM payments p WHERE p.payer_user_id = :userId)`,
-        'paymentsCount',
-      )
-      .addSelect(
-        `(SELECT COUNT(*) FROM reservations r WHERE r.reserved_by_user_id = :userId)`,
-        'reservationsCount',
-      )
-      .setParameter('userId', id)
-      .getRawOne<{
-        organizedEventsCount: string;
-        contributionsCount: string;
-        paymentsCount: string;
-        reservationsCount: string;
-      }>();
+    // ✅ CORRECTIF : utiliser 4 COUNT séparés avec .from('users', 'u') comme ancre
+    // ou passer par les repositories directement — plus simple et fiable
+    const organizedEventsCount = await this.eventsRepository
+      .createQueryBuilder('event')
+      .leftJoin('event.organizer', 'organizer')
+      .where('organizer.id = :userId', { userId: id })
+      .getCount();
+
+    const contributionsCount = await this.contributionsRepository
+      .createQueryBuilder('c')
+      .where('c.contributor_user_id = :userId', { userId: id })
+      .getCount();
+
+    const paymentsCount = await this.paymentsRepository
+      .createQueryBuilder('p')
+      .where('p.payer_user_id = :userId', { userId: id })
+      .getCount();
+
+    const reservationsCount = await this.reservationsRepository
+      .createQueryBuilder('r')
+      .where('r.reserved_by_user_id = :userId', { userId: id })
+      .getCount();
 
     const auditLogs = await this.auditLogsRepository
       .createQueryBuilder('audit')
@@ -370,10 +366,10 @@ export class UsersService {
       updatedAt: user.updatedAt,
 
       summary: {
-        organizedEventsCount: Number(summaryRaw?.organizedEventsCount ?? 0),
-        contributionsCount: Number(summaryRaw?.contributionsCount ?? 0),
-        paymentsCount: Number(summaryRaw?.paymentsCount ?? 0),
-        reservationsCount: Number(summaryRaw?.reservationsCount ?? 0),
+        organizedEventsCount,
+        contributionsCount,
+        paymentsCount,
+        reservationsCount,
       },
 
       organizedEvents: organizedEvents.map((event) => ({
@@ -423,44 +419,15 @@ export class UsersService {
         id: payment.id,
         amount: Number(payment.amount),
         currencyCode: payment.currencyCode,
-        provider: payment.provider,
-        paymentMethod: payment.paymentMethod,
         status: payment.status,
-        providerReference: payment.providerReference,
-        providerTransactionId: payment.providerTransactionId,
-        initiatedAt: payment.initiatedAt,
-        confirmedAt: payment.confirmedAt,
-        failedAt: payment.failedAt,
-        refundedAt: payment.refundedAt,
-        createdAt: payment.createdAt,
-        contribution: payment.contribution
-          ? {
-              id: payment.contribution.id,
-              status: payment.contribution.status,
-              event: payment.contribution.event
-                ? {
-                    id: payment.contribution.event.id,
-                    title: payment.contribution.event.title,
-                  }
-                : null,
-            }
-          : null,
+        provider: payment.provider,
       })),
 
       latestReservations: reservations.map((reservation) => ({
         id: reservation.id,
         status: reservation.status,
-        reservedAt: reservation.reservedAt,
-        expiresAt: reservation.expiresAt,
-        releasedAt: reservation.releasedAt,
-        releaseReason: reservation.releaseReason,
-        createdAt: reservation.createdAt,
         event: reservation.event
-          ? {
-              id: reservation.event.id,
-              title: reservation.event.title,
-              eventDate: reservation.event.eventDate,
-            }
+          ? { id: reservation.event.id, title: reservation.event.title }
           : null,
         wishlistItem: reservation.wishlistItem
           ? {
