@@ -92,6 +92,26 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(PlatformRole.ADMIN, PlatformRole.SUPER_ADMIN)
+  @Get('admin/export')
+  async exportAdminUsersCsv(
+    @Query() query: AdminUsersQueryDto,
+    @CurrentUser() actor: JwtUser,
+    @Res() res: Response,
+  ) {
+    const csv = await this.usersService.exportAdminUsersCsv(query);
+
+    const filename = `users-export-${new Date().toISOString().slice(0, 10)}.csv`;
+
+    await this.usersService.logAdminUsersExport(actor, query);
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    res.send(csv);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(PlatformRole.ADMIN, PlatformRole.SUPER_ADMIN)
   @Get('admin/:id')
   async getAdminUserById(@Param('id', ParseIntPipe) id: number) {
     const item = await this.usersService.getAdminUserById(id);
@@ -152,25 +172,5 @@ export class UsersController {
     );
 
     return buildSuccessResponse({ item }, 'Rôle utilisateur mis à jour');
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(PlatformRole.ADMIN, PlatformRole.SUPER_ADMIN)
-  @Get('admin/export')
-  async exportAdminUsersCsv(
-    @Query() query: AdminUsersQueryDto,
-    @CurrentUser() actor: JwtUser,
-    @Res() res: Response,
-  ) {
-    const csv = await this.usersService.exportAdminUsersCsv(query);
-
-    const filename = `users-export-${new Date().toISOString().slice(0, 10)}.csv`;
-
-    await this.usersService.logAdminUsersExport(actor, query);
-
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
-    res.send(csv);
   }
 }

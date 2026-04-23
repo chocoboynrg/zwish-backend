@@ -143,6 +143,41 @@ export class PaymentsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(PlatformRole.ADMIN, PlatformRole.SUPER_ADMIN)
+  @Get('admin/export')
+  async exportAdminPaymentsCsv(
+    @Query() query: AdminPaymentsQueryDto,
+    @CurrentUser() actor: JwtUser,
+    @Res() res: Response,
+  ) {
+    const csv = await this.paymentsService.exportAdminPaymentsCsv(query);
+
+    const filename = `payments-export-${new Date().toISOString().slice(0, 10)}.csv`;
+
+    await this.paymentsService.logAdminPaymentsExport(actor, query);
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    res.send(csv);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(PlatformRole.ADMIN, PlatformRole.SUPER_ADMIN)
+  @Get('admin/reconciliation')
+  async getReconciliationReport(@Query() query: ReconciliationQueryDto) {
+    const { items, total, summary } =
+      await this.paymentsService.getReconciliationReport(query);
+
+    return buildListResponse(
+      items,
+      total,
+      summary,
+      'Rapport de réconciliation chargé',
+    );
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(PlatformRole.ADMIN, PlatformRole.SUPER_ADMIN)
   @Get('admin/:id')
   async getAdminPaymentById(@Param('id', ParseIntPipe) id: number) {
     const item = await this.paymentsService.getAdminPaymentById(id);
@@ -173,21 +208,6 @@ export class PaymentsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(PlatformRole.ADMIN, PlatformRole.SUPER_ADMIN)
-  @Get('admin/reconciliation')
-  async getReconciliationReport(@Query() query: ReconciliationQueryDto) {
-    const { items, total, summary } =
-      await this.paymentsService.getReconciliationReport(query);
-
-    return buildListResponse(
-      items,
-      total,
-      summary,
-      'Rapport de réconciliation chargé',
-    );
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(PlatformRole.ADMIN, PlatformRole.SUPER_ADMIN)
   @Get('admin/:id/webhooks')
   async getPaymentWebhookEvents(
     @Param('id', ParseIntPipe) id: number,
@@ -202,25 +222,5 @@ export class PaymentsController {
       summary,
       'Événements webhook du paiement chargés',
     );
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(PlatformRole.ADMIN, PlatformRole.SUPER_ADMIN)
-  @Get('admin/export')
-  async exportAdminPaymentsCsv(
-    @Query() query: AdminPaymentsQueryDto,
-    @CurrentUser() actor: JwtUser,
-    @Res() res: Response,
-  ) {
-    const csv = await this.paymentsService.exportAdminPaymentsCsv(query);
-
-    const filename = `payments-export-${new Date().toISOString().slice(0, 10)}.csv`;
-
-    await this.paymentsService.logAdminPaymentsExport(actor, query);
-
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
-    res.send(csv);
   }
 }
