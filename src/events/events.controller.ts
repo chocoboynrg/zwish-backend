@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -151,5 +152,25 @@ export class EventsController {
     await this.eventsService.deleteEvent(id, user.userId);
 
     return buildSuccessResponse(null, 'Événement supprimé avec succès');
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/archive')
+  async archiveEvent(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: JwtUser,
+  ) {
+    await this.eventsService.archiveEvent(id, user.userId);
+    return buildSuccessResponse(null, 'Événement archivé avec succès');
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/unarchive')
+  async unarchiveEvent(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: JwtUser,
+  ) {
+    await this.eventsService.unarchiveEvent(id, user.userId);
+    return buildSuccessResponse(null, 'Événement désarchivé avec succès');
   }
 }

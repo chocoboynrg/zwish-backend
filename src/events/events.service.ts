@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -372,6 +373,8 @@ export class EventsService {
         wishlistId: wishlist?.id ?? null,
         canDelete,
         deleteBlockedReason,
+        isArchived: event.isArchived,
+        archivedAt: event.archivedAt,
       },
       accessRole,
       summary: {
@@ -512,5 +515,37 @@ export class EventsService {
     }
 
     await this.eventsRepository.remove(event);
+  }
+
+  async archiveEvent(eventId: number, userId: number): Promise<void> {
+    const event = await this.eventsRepository.findOne({
+      where: { id: eventId },
+      relations: ['organizer'],
+    });
+    if (!event) throw new NotFoundException('Événement introuvable');
+    if (event.organizer?.id !== userId)
+      throw new ForbiddenException('Accès refusé');
+    if (event.isArchived)
+      throw new BadRequestException('Événement déjà archivé');
+
+    event.isArchived = true;
+    event.archivedAt = new Date();
+    await this.eventsRepository.save(event);
+  }
+
+  async unarchiveEvent(eventId: number, userId: number): Promise<void> {
+    const event = await this.eventsRepository.findOne({
+      where: { id: eventId },
+      relations: ['organizer'],
+    });
+    if (!event) throw new NotFoundException('Événement introuvable');
+    if (event.organizer?.id !== userId)
+      throw new ForbiddenException('Accès refusé');
+    if (!event.isArchived)
+      throw new BadRequestException('Événement non archivé');
+
+    event.isArchived = false;
+    event.archivedAt = null;
+    await this.eventsRepository.save(event);
   }
 }

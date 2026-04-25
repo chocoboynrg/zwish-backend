@@ -45,6 +45,7 @@ export class DashboardService {
       .createQueryBuilder('event')
       .leftJoin('event.organizer', 'organizer')
       .where('organizer.id = :userId', { userId })
+      .andWhere('event.is_archived = false')
       .orderBy('event.id', 'DESC')
       .getMany();
 

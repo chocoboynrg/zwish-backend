@@ -32,6 +32,12 @@ export class Event {
   })
   shareToken: string | null;
 
+  @Column({ name: 'is_archived', default: false })
+  isArchived: boolean;
+
+  @Column({ name: 'archived_at', type: 'timestamp', nullable: true })
+  archivedAt: Date | null;
+
   // Owner technique de l’événement
   @ManyToOne(() => User, { eager: true, nullable: false })
   organizer: User;
